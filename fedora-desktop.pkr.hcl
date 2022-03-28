@@ -55,11 +55,11 @@ build {
   #     ]
   # }
 
-  # provisioner "ansible-local" {
-  #   playbook_file   = "./ansible/playbook.yml"
-  #   playbook_dir    = "./ansible/"
-  #   clean_staging_directory = true
-  #   staging_directory = "/tmp/ansible-packer"
-  # }
+  provisioner "ansible-local" {
+    playbook_file   = "./ansible/playbook.yml"
+    playbook_dir    = "./ansible/"
+    clean_staging_directory = true
+    staging_directory = "/tmp/ansible-packer"
+  }
 
 }

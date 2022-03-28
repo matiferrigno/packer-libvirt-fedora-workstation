@@ -1,0 +1,77 @@
+- name: install packages for nvidia drivers
+  dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - kernel-devel
+    - kernel-headers
+    - bison
+    - flex
+    - gcc
+    - make
+    - dkms
+    - acpid
+    - libglvnd-glx
+    - libglvnd-opengl
+    - libglvnd-devel
+    - pkgconfig
+    - xorg-x11-server-Xwayland
+    - libxcb
+    - egl-wayland
+    - vdpauinfo
+    - libva-vdpau-driver
+    - libva-utils
+
+- name: copy nvidia driver
+  copy:
+    src: NVIDIA-Linux-x86_64-510.60.02.run
+    dest: /root/NVIDIA-Linux.sh
+    mode: u=rx,g=rx,o=r
+
+- name: blacklist nouveau kernel module
+  kernel_blacklist:
+    name: nouveau
+    state: present
+
+- name: prepare grub for nvidia
+  shell: sed -i 's/GRUB_CMDLINE_LINUX.*/GRUB_CMDLINE_LINUX="rhgb quiet rd.driver.blacklist=nouveau nvidia-drm.modeset=1"/g' /etc/default/grub
+
+- name: prepare grub for nvidia
+  shell: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: remove packages for nvidia drivers
+  dnf:
+    name: xorg-x11-drv-nouveau
+    state: absent
+
+- name: prepare grub for nvidia
+  shell: dracut --force /boot/initramfs-$(uname -r).img $(uname -r)
+
+- name: change to multi-user
+  shell: systemctl set-default multi-user.target
+
+- name: Put SELinux in permissive mode, logging actions that would be blocked.
+  ansible.posix.selinux:
+    policy: targeted
+    state: permissive
+
+- name: reboot
+  reboot:
+
+- name: Wait for the reboot to complete
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 300
+
+- name: run nvidia installer
+  shell: ./NVIDIA-Linux.sh --silent --accept-license --dkms --run-nvidia-xconfig
+  args:
+    chdir: /root/
+
+- name: back to graphical
+  shell: systemctl set-default graphical.target
+
+- name: reboot
+  reboot:

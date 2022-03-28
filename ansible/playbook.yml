@@ -6,5 +6,30 @@
   become: true
   tasks:
 
-    - debug:
-        msg: "none"
+    - name: Install zsh
+      ansible.builtin.package:
+        name: zsh
+        state: present
+
+    - name: update cache
+      dnf:
+        update_cache: yes
+        update_only: yes
+
+    - name: install packages
+      dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - '@Development Tools'
+        - tmux
+        - byobu
+        - tcpdump
+        - neovim
+        - kmod-v4l2loopback
+
+    - name: Add the flathub flatpak repository remote installation
+      community.general.flatpak_remote:
+        name: flathub
+        state: present
+        flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
